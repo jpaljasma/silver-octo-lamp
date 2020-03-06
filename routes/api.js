@@ -11,20 +11,28 @@ router.get('/', function(req, res, next) {
   switch (q) {
     case 'source':
       responseMessage = 'https://github.com/jpaljasma/silver-octo-lamp';
+      break;
     case 'status':
       responseMessage = 'Yes';
+      break;
     case 'email address':
       responseMessage = 'jpaljasma@gmail.com';
+      break;
     case 'referrer':
       responseMessage = 'I found this position on LinkedIn. But Mike Marc-Aurele has been great working with me.';
+      break;
     case 'phone':
       responseMessage = '(646) 280-7151';
+      break;
     case 'name':
       responseMessage = 'Jaan Paljasma';
+      break;
     case 'position':
       responseMessage = 'Senior Software Engineer (EMX)';
+      break;
     case 'years':
       responseMessage = '20';
+      break;
     case 'resume':
       responseMessage = 'https://www.dropbox.com/s/gvpp5m1g2t3gpnf/Jaan_Paljasma_Resume.pdf?dl=0';
       break;
@@ -34,6 +42,7 @@ router.get('/', function(req, res, next) {
     case 'puzzle':
 
 // GET /?q=Puzzle&d=Please+solve+this+puzzle%3A%0A+ABCD%0AA%3D---%0AB--%3E-%0AC%3E---%0AD%3C---%0A
+// GET /?q=Puzzle&d=Please+solve+this+puzzle%3A%0A+ABCD%0AA--%3E-%0AB--%3C-%0AC--%3D-%0AD%3E---%0A
 
 //   A B C D
 // A = - - -
@@ -54,15 +63,34 @@ router.get('/', function(req, res, next) {
 // C > < = >
 // D < < < =
 
+// GET /?q=Puzzle&d=Please+solve+this+puzzle%3A%0A+ABCD%0AA-%3E--%0AB--%3E-%0AC--%3D-%0AD--%3C-%0A
+
+// Initial
+//   A B C D
+// A - > - -
+// B - - > -
+// C - - = -
+// D - - < -
+
+// 1st pass - add "=", known opposite, and fill blanks row by row
+//   A B C D
+// A = > > >
+// B < = > -
+// C - - = -
+// D - - < =
+
+//   A B C D
+// A = > > >
+// B < = > >
+// C < < = >
+// D < < < =
 
       // split the input by rows
       var pd = d.split('\n');
+      console.log(d);
 
       // x holds the data
       var x = [];
-
-      // grab puzzle header
-      var headLine = pd[1];
 
       // add input characters to the 2-dimensional array
       for (var i = 2; i < 6; i++) {
@@ -70,28 +98,26 @@ router.get('/', function(req, res, next) {
       }
 
       // place equal sign in the center diagonal
-      var eqs = x[0][0];
-      for(i = 1; i < 4; i++) {
-        x[i][i] = eqs;
+      for(i = 0; i < 4; i++) {
+        x[i][i] = '=';
       }
 
-      // find a character to repeat horizontally
-      var ch = '';
+      console.log(x);
+
+      var y = x.slice();  // clone
+
+      // find placholders
+      var _ph = [];
       for(row = 0; row < 4; row++) {
         for(col = 0; col < 4; col++) {
-          ch = x[row][col];
-          if(ch !== '=' && ch !== '-') {
-            // found the character, repeat that character and move to next row
-            for(col2 = 0; col2 < 4; col2++) {
-              if(x[row][col2] !== '=') {
-                x[row][col2] = ch;
-              }
-            }
-            col = 5;  // move on to next row
+          if(col === row) continue;
+          if(x[row][col] != '-') {
+            _ph[row] = x[row][col];
           }
-        }  
+        }
       }
 
+      // find a character and flip it
       var map = {
         '-': '-',
         '=': '=',
@@ -99,26 +125,49 @@ router.get('/', function(req, res, next) {
         '>': '<'
       };
 
-      // translate
-      var translate = function(ch) {
-        // Flip the known opposites
-        for(row = 0; row < 4; row++) {
-          for(col = 0; col < 4; col++) {
-            if(x[row][col] !== ch) {
-              x[col][row] = map[x[row][col]];
-            }
+      for(row = 0; row < 4; row++) {
+        for(col = 0; col < 4; col++) {
+          if(col === row) continue;
+          if(x[row][col] != '-') {
+            y[col][row] = map[x[row][col]];
           }
         }
       }
 
-      // translate in two passes
-      translate('-');
-      translate('=');
+      console.log('After first pass');
+      console.log(y);
+
+      // fill the gaps 
+      for(row = 0; row < 4; row++) {
+        if(!_ph[row]) continue;
+
+        for(col = 0; col < 4; col++) {
+          if(col === row) continue;
+          if(y[row][col] == '-') {
+            y[row][col] = _ph[row];
+          }
+        }
+      }
+
+      console.log('After second pass');
+      console.log(y);
+
+      for(row = 0; row < 4; row++) {
+        for(col = 0; col < 4; col++) {
+          if(col === row) continue;
+          if(y[row][col] !== '-') {
+            y[col][row] = map[y[row][col]];
+          }
+        }
+      }
+
+      console.log('Final pass');
+      console.log(y);
 
       // construct the output
-      responseMessage  = headLine + '\n';
+      responseMessage  = ' ABCD\n';
       for(i = 0; i < 4; i++) {
-        responseMessage += String.fromCharCode(65+i) + x[i].join('') + '\n';
+        responseMessage += String.fromCharCode(65+i) + y[i].join('') + '\n';
       }
       
       break;

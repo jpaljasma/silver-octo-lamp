@@ -125,14 +125,18 @@ router.get('/', function(req, res, next) {
         '>': '<'
       };
 
-      for(row = 0; row < 4; row++) {
-        for(col = 0; col < 4; col++) {
-          if(col === row) continue;
-          if(x[row][col] != '-') {
-            y[col][row] = map[x[row][col]];
+      var flipMap = function() {
+        for(row = 0; row < 4; row++) {
+          for(col = 0; col < 4; col++) {
+            if(col === row) continue;
+            if(x[row][col] != '-') {
+              y[col][row] = map[x[row][col]];
+            }
           }
-        }
+        }  
       }
+
+      flipMap();
 
       console.log('After first pass');
       console.log(y);
@@ -152,14 +156,7 @@ router.get('/', function(req, res, next) {
       console.log('After second pass');
       console.log(y);
 
-      for(row = 0; row < 4; row++) {
-        for(col = 0; col < 4; col++) {
-          if(col === row) continue;
-          if(y[row][col] !== '-') {
-            y[col][row] = map[y[row][col]];
-          }
-        }
-      }
+      flipMap();
 
       console.log('Final pass');
       console.log(y);
